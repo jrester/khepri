@@ -215,7 +215,8 @@ let
       image = imageName;
       imageFile =
         if builtins.isAttrs serviceConfiguration.image then serviceConfiguration.image else null;
-      # Some extra parameters that are passed as is
+      # Some extra parameters that are passed as is.
+      # TODO: this is quite verbose and repetitive. Find a better way to pass those options.
       environment = serviceConfiguration.environment;
       cmd = serviceConfiguration.cmd;
       ports = serviceConfiguration.ports;
@@ -260,6 +261,7 @@ let
       ports = serviceConfiguration.ports;
       dependsOn = serviceConfiguration.dependsOn;
       labels = serviceConfiguration.labels;
+      entrypoint = serviceConfiguration.entrypoint;
       extraOptions =
         let
           networkOption =
