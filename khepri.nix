@@ -97,6 +97,10 @@ let
           type = types.attrsOf types.str;
           default = { };
         };
+        entrypoint = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+        };
       };
     };
   # Helper functions to enable consistent name generation
@@ -221,6 +225,7 @@ let
       capDrop = serviceConfiguration.capDrop;
       extraHosts = serviceConfiguration.extraHosts;
       restart = serviceConfiguration.restart;
+      entrypoint = serviceConfiguration.entrypoint;
 
       # Additional information for systemd
       systemdTarget = mkSystemdTargetName compositionName;
