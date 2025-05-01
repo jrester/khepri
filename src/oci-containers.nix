@@ -9,15 +9,17 @@ rec {
       volumeMappingParts = builtins.split ":" volumeMapping;
       volumeNameOrLocalPath = head volumeMappingParts;
       volumeObject = helpers.findObjectByNameInObjects volumeNameOrLocalPath volumeObjects;
-      canonicalVolumeNameOrLocalPath =
-        if volumeObject != null then helpers.mkVolumeName volumeObject else volumeNameOrLocalPath;
+      isVolume = volumeObject != null;
     in
-    strings.concatStringsSep ":" (
-      [
-        canonicalVolumeNameOrLocalPath
-      ]
-      ++ (flatten (tail volumeMappingParts))
-    );
+    if isVolume then
+      strings.concatStringsSep ":" (
+        [
+          (helpers.mkVolumeName volumeObject)
+        ]
+        ++ (flatten (tail volumeMappingParts))
+      )
+    else
+      volumeMapping;
 
   mkContainerConfigurationForService =
     serviceObject:
