@@ -31,7 +31,6 @@ rec {
     nameValuePair (helpers.mkServiceName serviceObject) {
       # Some options can be mapped one-to-one.
       inherit (serviceObject)
-        environment
         environmentFiles
         cmd
         ports
@@ -50,6 +49,8 @@ rec {
 
       # Upstream dependsOn is broken, since it does not respect the different service names.
       dependsOn = [ ];
+
+      environment = attrsets.mapAttrs (name: value: builtins.toString value) serviceObject.environment;
 
       volumes = map (
         volumeMapping: _mkCanonicalVolumeMapping volumeMapping serviceObject.volumeObjects
