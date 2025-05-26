@@ -99,8 +99,14 @@ rec {
         RestartSec = mkOverride 500 "100ms";
         RestartSteps = mkOverride 500 9;
       };
+      startLimitBurst = 3;
+      startLimitIntervalSec = 30;
+
       after = dependencies;
-      requires = dependencies;
+      # `docker.service` is already part of `after`, however putting it also into `wants` adds a stricter dependency.
+      wants = [ "docker.service" ];
+      # Add `docker.socket` explicitly to ensure the docker daemon is available.
+      requires = dependencies ++ [ "docker.socket" ];
       partOf = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
       wantedBy = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
     };
