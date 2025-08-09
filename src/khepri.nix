@@ -49,6 +49,10 @@ let
     { ... }:
     {
       options = {
+        enable = lib.mkOption {
+          type = types.bool;
+          default = true;
+        };
         image = mkOption { type = types.either types.str types.package; };
         restart = mkOption {
           type = types.enum [
@@ -163,13 +167,15 @@ in
           ) compositionOptions.volumes)
         ) cfg.compositions
       );
+
+      enabledServices = filter (serviceObject: serviceObject.enable) compositionOptions.services;
       serviceObjects = flatten (
         mapAttrsToList (
           compositionName: compositionOptions:
           (mapAttrsToList (
             serviceName: serviceOptions:
             (mkServiceObject compositionName serviceName serviceOptions volumeObjects networkObjects)
-          ) compositionOptions.services)
+          ) enabledServices)
         ) cfg.compositions
       );
       targets = lists.unique (
