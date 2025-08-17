@@ -168,14 +168,13 @@ in
         ) cfg.compositions
       );
 
-      enabledServices = filter (serviceObject: serviceObject.enable) compositionOptions.services;
       serviceObjects = flatten (
         mapAttrsToList (
           compositionName: compositionOptions:
           (mapAttrsToList (
             serviceName: serviceOptions:
             (mkServiceObject compositionName serviceName serviceOptions volumeObjects networkObjects)
-          ) enabledServices)
+          ) compositionOptions.services)
         ) cfg.compositions
       );
       targets = lists.unique (
