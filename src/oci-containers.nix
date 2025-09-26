@@ -67,9 +67,15 @@ rec {
         ++ (_mkExtraOptionsFor "cap-add" serviceObject.capAdd)
         ++ (_mkExtraOptionsFor "cap-drop" serviceObject.capDrop)
         ++ (_mkExtraOptionsFor "add-host" serviceObject.extraHosts)
-        ++ [
-          "--network-alias=${hostName}"
-        ];
+        ++ (
+          # Hostname might only be set if at least one user-defined network is specified for the container.
+          if builtins.length serviceObject.networks > 0 then
+            [
+              "--network-alias=${hostName}"
+            ]
+          else
+            [ ]
+        );
 
       serviceName = helpers.mkSystemdServiceName serviceObject;
     };
