@@ -12,8 +12,8 @@ let
     {
       options = {
         external = mkOption {
-          default = false;
           type = types.bool;
+          default = false;
         };
       };
     };
@@ -22,8 +22,8 @@ let
     {
       options = {
         external = mkOption {
-          default = false;
           type = types.bool;
+          default = false;
         };
       };
     };
@@ -32,8 +32,8 @@ let
     {
       options = {
         services = mkOption {
-          default = { };
           type = types.attrsOf (types.submodule serviceOptions);
+          default = { };
         };
         volumes = mkOption {
           type = types.attrsOf (types.submodule compositionVolumeOptions);
@@ -143,6 +143,14 @@ let
 in
 {
   options.khepri = {
+    backend = mkOption {
+      type = types.enum [
+        "podman"
+        "docker"
+      ];
+      default = "docker";
+      description = "The underlying Docker implementation to use.";
+    };
     compositions = mkOption {
       type = types.attrsOf (types.submodule compositionOptions);
       default = { };
@@ -151,6 +159,16 @@ in
 
   config = mkIf (cfg.compositions != { }) (
     let
+      # Setup the khepri context which is used to differentiate between podman and docker.
+      ociPackage = (if cfg.backend == "docker" then pkgs.docker else pkgs.podman);
+      ociExecutable = (
+        if cfg.backend == "docker" then "${pkgs.docker}/bin/docker" else "${pkgs.podman}/bin/podman"
+      );
+      khepriContext = {
+        inherit ociPackage ociExecutable;
+        backend = cfg.backend;
+      };
+
       networkObjects = flatten (
         mapAttrsToList (
           compositionName: compositionOptions:
@@ -184,6 +202,8 @@ in
       );
     in
     {
+      # Set the oci-containers backend. oci-containers will automatically enable the required virtualization backend.
+      virtualisation.oci-containers.backend = cfg.backend;
       virtualisation.oci-containers.containers = listToAttrs (
         map (
           serviceObject: ociContainersHelpers.mkContainerConfigurationForService serviceObject
@@ -191,16 +211,16 @@ in
       );
       systemd.services =
         let
-          services = listToAttrs (systemdHelpers.mkSystemdServicesForServices serviceObjects);
+          services = listToAttrs (systemdHelpers.mkSystemdServicesForServices serviceObjects khepriContext);
           volumes = listToAttrs (
-            systemdHelpers.mkSystemdServicesForVolumes (
-              filter (volumeObject: !volumeObject.external) volumeObjects
-            )
+            systemdHelpers.mkSystemdServicesForVolumes (filter (
+              volumeObject: !volumeObject.external
+            ) volumeObjects) khepriContext
           );
           networks = listToAttrs (
-            systemdHelpers.mkSystemdServicesForNetworks (
-              filter (networkObject: !networkObject.external) networkObjects
-            )
+            systemdHelpers.mkSystemdServicesForNetworks (filter (
+              networkObject: !networkObject.external
+            ) networkObjects) khepriContext
           );
         in
         mkMerge [

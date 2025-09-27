@@ -10,19 +10,21 @@ rec {
   # Creation of systemd units for volumes.
   # Volumes are only created, but never destroyed.
   mkSystemdServicesForVolumes =
-    volumeObjects:
+    volumeObjects: khepriContext:
     (map (
       volumeObject:
-      nameValuePair (helpers.mkSystemdVolumeName volumeObject) (mkSystemdServiceForVolume volumeObject)
+      nameValuePair (helpers.mkSystemdVolumeName volumeObject) (
+        mkSystemdServiceForVolume volumeObject khepriContext
+      )
     ) volumeObjects);
-  mkSystemdServiceForVolume = volumeObject: {
-    path = [ pkgs.docker ];
+  mkSystemdServiceForVolume = volumeObject: khepriContext: {
+    path = [ khepriContext.ociPackage ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     script = ''
-      docker volume inspect ${helpers.mkVolumeName volumeObject} || docker volume create ${helpers.mkVolumeName volumeObject}
+      ${khepriContext.ociExecutable} volume inspect ${helpers.mkVolumeName volumeObject} || ${khepriContext.ociExecutable} volume create ${helpers.mkVolumeName volumeObject}
     '';
     partOf = [ "${helpers.mkSystemdCompositionTargetName volumeObject.compositionName}.target" ];
     wantedBy = [ "${helpers.mkSystemdCompositionTargetName volumeObject.compositionName}.target" ];
@@ -31,42 +33,43 @@ rec {
   # Creation of systemd units for networks.
   # Networks are created and destroyed with the lifecycle of a composition.
   mkSystemdServicesForNetworks =
-    networkObjects:
+    networkObjects: khepriContext:
     map (
       networkObject:
       (nameValuePair (helpers.mkSystemdNetworkName networkObject) (
-        mkSystemdServiceForNetwork networkObject
+        mkSystemdServiceForNetwork networkObject khepriContext
       ))
     ) networkObjects;
-  mkSystemdServiceForNetwork = networkObject: {
+  mkSystemdServiceForNetwork = networkObject: khepriContext: {
     path = [
-      pkgs.docker
+      khepriContext.ociPackage
     ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStop = "${pkgs.docker}/bin/docker network rm -f ${helpers.mkNetworkName networkObject}";
+      ExecStop = "${khepriContext.ociExecutable} network rm -f ${helpers.mkNetworkName networkObject}";
     };
     script = ''
-      docker network inspect ${helpers.mkNetworkName networkObject} || docker network create ${helpers.mkNetworkName networkObject}
+      ${khepriContext.ociExecutable} network inspect ${helpers.mkNetworkName networkObject} || ${khepriContext.ociExecutable} network create ${helpers.mkNetworkName networkObject}
     '';
     partOf = [ "${helpers.mkSystemdCompositionTargetName networkObject.compositionName}.target" ];
     wantedBy = [ "${helpers.mkSystemdCompositionTargetName networkObject.compositionName}.target" ];
   };
 
+  # Creation of system units for services.
   mkSystemdServicesForServices =
-    serviceObjects:
+    serviceObjects: khepriContext:
     map (
       serviceObject:
       (nameValuePair (helpers.mkSystemdServiceName serviceObject) (
-        mkSystemdServiceForService serviceObject (
-          helpers.findObjectsOfComposition serviceObject.compositionName serviceObjects
-        )
+        mkSystemdServiceForService serviceObject
+          (helpers.findObjectsOfComposition serviceObject.compositionName serviceObjects)
+          khepriContext
       ))
     ) serviceObjects;
 
   mkSystemdServiceForService =
-    serviceObject: compositionServiceObjects:
+    serviceObject: compositionServiceObjects: khepriContext:
     let
       referencedNetworkObjects = map (
         networkName: helpers.findObjectByNameInObjects networkName serviceObject.networkObjects
@@ -90,7 +93,7 @@ rec {
     in
     {
       path = [
-        pkgs.docker
+        khepriContext.ociPackage
         pkgs.gnugrep
       ];
       serviceConfig = {
@@ -104,9 +107,9 @@ rec {
 
       after = dependencies;
       # `docker.service` is already part of `after`, however putting it also into `wants` adds a stricter dependency.
-      wants = [ "docker.service" ];
+      wants = (if khepriContext.backend == "docker" then [ "docker.service" ] else [ ]);
       # Add `docker.socket` explicitly to ensure the docker daemon is available.
-      requires = dependencies ++ [ "docker.socket" ];
+      requires = dependencies ++ (if khepriContext.backend == "docker" then [ "docker.socket" ] else [ ]);
       partOf = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
       wantedBy = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
     };

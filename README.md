@@ -1,6 +1,6 @@
 # khepri
 
-NixOS docker container orchestration in native nix similar to docker-compose. 
+NixOS container orchestration in native nix similar to docker-compose. 
 
 `khepri` allows you to easily define "container compositions" natively in your NixOS configuration similarly how you would define them in a `docker-compose.yaml`. This enables your NixOS configuration to become the source of truth for your system, without the need for another orchestration layer on top.
 
@@ -17,12 +17,15 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
 ```nix
 {
   inputs = {
-    nixpkgs.url = "https://github.com/NixOS/nixpkgs/tarball/nixos-23.11";
-    khepri = { url = "git+https://github.com/jrester/khepri.git"; };
+    nixpkgs.url = "github:nixos/nixpkgs/25.05";
+    khepri = {
+      url = "git+https://github.com/jrester/khepri.git";
+      inputs.nixpkgs.follows = nixpkgs;
+    };
   };
   outputs = { self, nixpkgs, khepri }: {
     nixosConfigurations.yourSystem = nixpkgs.lib.nixosSystem {
-      modules = [ ./configuration.nix khepri.nixosModules.default ];
+      modules = [ ./configuration.nix khepri.nixosModules.khepri ];
     };
   };
 }
@@ -30,16 +33,10 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
 
 ## Example
 
-### Full Example
-
 ```nix
 { config, pkgs, lib, ... }: {
-  # docker must be enabled
-  virtualisation.docker = {
-    enable = true;
-  };
-  # khepri uses oci-containers under the hood and it must be set to docker to work
-  virtualisation.oci-containers.backend = "docker";
+  # You can choose between 'docker' and 'podman' as backend.
+  khepri.backend = "docker";
 
   # Define the compositions
   khepri.compositions = {
@@ -66,7 +63,12 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
         paperless = { };
         proxy_net = { external = true; };
       };
-      volumes = [ "data" "pgdata" "redisdata" "documents" ];
+      volumes = {
+        data = {};
+        pgdata = {};
+        redisdata = {};
+        documents = {};
+      };
       services = {
         broker = {
           image = "docker.io/library/redis:7";
@@ -169,7 +171,7 @@ When specifying the image as a string, this image will be pulled automatically o
 | [`container_name`](https://docs.docker.com/compose/compose-file/05-services/#container_name) | ✅ | |
 | [`environment`](https://docs.docker.com/compose/compose-file/05-services/#environment) | ✅ | |
 | [`volumes`](https://docs.docker.com/compose/compose-file/05-services/#volumes) | ✅ | |
-| [`labels`](https://docs.docker.com/compose/compose-file/05-services/#labels) | ❌ | |
+| [`labels`](https://docs.docker.com/compose/compose-file/05-services/#labels) | ✅ | |
 | [`ports`](https://docs.docker.com/compose/compose-file/05-services/#ports) | ✅ | |
 | [`dns`](https://docs.docker.com/compose/compose-file/05-services/#dns) | ❌ | |
 | [`cap_add/cap_drop`](https://docs.docker.com/compose/compose-file/05-services/#cap_add) | ✅ | |
@@ -216,7 +218,7 @@ When specifying the image as a string, this image will be pulled automatically o
 | [`driver_opts`](https://docs.docker.com/compose/compose-file/07-volumes/#driver_opts) | ❌ |
 | [`labels`](https://docs.docker.com/compose/compose-file/07-volumes/#labels) | ❌ |
 | [`name`](https://docs.docker.com/compose/compose-file/07-volumes/#name) | ❌ |
-| [`external`](https://docs.docker.com/compose/compose-file/07-volumes/#external) | ❌ |
+| [`external`](https://docs.docker.com/compose/compose-file/07-volumes/#external) | ✅ |
 
 # Comparison to other tools
 
