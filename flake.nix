@@ -1,15 +1,16 @@
 {
   description = "NixOS native container orchestration";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
   };
   outputs =
     { self, nixpkgs, ... }:
     let
-      # expose systems for `x86_64-linux` and `aarch64-linux`
       forAllSystems = nixpkgs.lib.genAttrs [
         "x86_64-linux"
         "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
       ];
     in
     {
@@ -18,15 +19,14 @@
         system:
         let
           checkArgs = {
-            # reference to nixpkgs for the current system
             pkgs = nixpkgs.legacyPackages.${system};
-            # this gives us a reference to our flake but also all flake inputs
             inherit self;
           };
         in
         {
-          test-basic-docker = import ./tests/test-basic-docker.nix checkArgs;
-          test-basic-podman = import ./tests/test-basic-podman.nix checkArgs;
+          test-nginx-docker = import ./tests/test-nginx-docker.nix checkArgs;
+          test-nginx-podman = import ./tests/test-nginx-podman.nix checkArgs;
+          test-nextcloud-docker = import ./tests/test-nextcloud-docker.nix checkArgs;
         }
       );
     };

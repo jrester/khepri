@@ -1,5 +1,5 @@
 (import ./lib.nix) {
-  name = "test-basic-docker";
+  name = "test-nginx-docker";
   nodes = {
     machine1 =
       { self, pkgs, ... }:

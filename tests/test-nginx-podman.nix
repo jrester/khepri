@@ -1,5 +1,5 @@
 (import ./lib.nix) {
-  name = "test-basic-podman";
+  name = "test-nginx-podman";
   nodes = {
     machine1 =
       { self, pkgs, ... }:
