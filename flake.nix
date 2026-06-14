@@ -1,7 +1,7 @@
 {
   description = "NixOS native container orchestration";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
   };
   outputs =
     { self, nixpkgs, ... }:
@@ -10,7 +10,6 @@
         "x86_64-linux"
         "aarch64-linux"
         "aarch64-darwin"
-        "x86_64-darwin"
       ];
     in
     {
@@ -27,6 +26,8 @@
           test-nginx-docker = import ./tests/test-nginx-docker.nix checkArgs;
           test-nginx-podman = import ./tests/test-nginx-podman.nix checkArgs;
           test-nextcloud-docker = import ./tests/test-nextcloud-docker.nix checkArgs;
+          test-healthchecks-docker = import ./tests/test-healthchecks-docker.nix checkArgs;
+          test-healthchecks-podman = import ./tests/test-healthchecks-podman.nix checkArgs;
         }
       );
     };
