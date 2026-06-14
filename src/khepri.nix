@@ -119,8 +119,46 @@ let
           type = types.nullOr types.str;
           default = null;
         };
+        healthcheck = mkOption {
+          type = types.nullOr (types.submodule serviceHealthcheckOptions);
+          default = null;
+        };
       };
     };
+  serviceHealthcheckOptions = { ... }: {
+    options = {
+      test = mkOption {
+        type = types.nullOr (types.listOf types.str);
+        default = null;
+        description = "Command to run to check health";
+      };
+      interval = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Time between running the check (ms|s|m|h)";
+      };
+      timeout = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Maximum time to allow one check to run (ms|s|m|h)";
+      };
+      retries = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = "Consecutive failures needed to report unhealthy";
+      };
+      startPeriod = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Start period for the container to initialize before starting health-retries countdown (ms|s|m|h)";
+      };
+      startInterval = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Time between running the check during the start period (ms|s|m|h)";
+      };
+    };
+  };
   helpers = import ./helpers.nix { inherit lib; };
   systemdHelpers = import ./systemd.nix { inherit helpers pkgs lib; };
   ociContainersHelpers = import ./oci-containers.nix { inherit helpers pkgs lib; };

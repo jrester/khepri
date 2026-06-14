@@ -10,7 +10,6 @@
         "x86_64-linux"
         "aarch64-linux"
         "aarch64-darwin"
-        "x86_64-darwin"
       ];
     in
     {
@@ -29,6 +28,8 @@
           test-nextcloud-docker = import ./tests/test-nextcloud-docker.nix checkArgs;
           test-ocipackage-docker = import ./tests/test-ocipackage-docker.nix checkArgs;
           test-ocipackage-podman = import ./tests/test-ocipackage-podman.nix checkArgs;
+          test-healthchecks-docker = import ./tests/test-healthchecks-docker.nix checkArgs;
+          test-healthchecks-podman = import ./tests/test-healthchecks-podman.nix checkArgs;
         }
       );
     };
