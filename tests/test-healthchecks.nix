@@ -1,5 +1,26 @@
+backend:
+let
+  # podman maps startInterval to --health-startup-interval (docker's
+  # --health-start-interval does not exist on podman), so it is not reflected in
+  # Config.Healthcheck.StartInterval. The is-active check still asserts the flag
+  # does not break startup.
+  fullStartInterval =
+    if backend == "docker" then ''("{{.Config.Healthcheck.StartInterval}}", "^2s$"),'' else "";
+
+  # Unlike docker, podman does not persist timing overrides when no health
+  # command is given and the image defines no probe, so Config.Healthcheck stays
+  # null. The is-active check still asserts the timing-only config works.
+  timingChecks =
+    if backend == "docker" then
+      ''
+        ("{{.Config.Healthcheck.Interval}}", "^15s$"),
+                ("{{.Config.Healthcheck.Timeout}}", "^5s$"),''
+    else
+      ''("{{json .Config.Healthcheck}}", "^null$"),'';
+in
 (import ./lib.nix) {
-  name = "test-healthchecks-podman";
+  inherit backend;
+  name = "test-healthchecks-${backend}";
 
   nodes.machine1 =
     {
@@ -33,7 +54,7 @@
       virtualisation.diskSize = 8192;
 
       khepri = {
-        ociBackend = "podman";
+        ociBackend = backend;
 
         compositions.test.services = {
           # Fully-specified healthcheck.
@@ -91,18 +112,11 @@
               ("{{.Config.Healthcheck.Timeout}}", "^10s$"),
               ("{{.Config.Healthcheck.Retries}}", "^3$"),
               ("{{.Config.Healthcheck.StartPeriod}}", "^5s$"),
-              # podman maps startInterval to --health-startup-interval (docker's
-              # --health-start-interval does not exist on podman), so it is not
-              # reflected in Config.Healthcheck.StartInterval. The systemctl
-              # is-active check below asserts the flag does not break startup.
+              ${fullStartInterval}
           ],
 
-          # Unlike docker, podman does not persist timing overrides when no
-          # health command is given and the image defines no probe, so
-          # Config.Healthcheck stays null here. The is-active check below still
-          # asserts the timing-only config does not break startup.
           "test_nginx_timing": [
-              ("{{json .Config.Healthcheck}}", "^null$"),
+              ${timingChecks}
           ],
 
           "test_nginx_disabled": [
@@ -114,20 +128,13 @@
           ],
       }
 
-      def assert_healthcheck(container, checks):
-          for fmt, expected in checks:
-              machine1.succeed(
-                  f"podman inspect --format '{fmt}' {container}"
-                  f" | grep -q '{expected}'"
-              )
-
       for unit in units:
           machine1.succeed(f"systemctl is-active --quiet {unit}")
 
       for container in cases:
-          machine1.succeed(f"podman inspect {container}")
+          inspect(machine1, container)
 
       for container, checks in cases.items():
-          assert_healthcheck(container, checks)
+          assert_healthcheck(machine1, container, checks)
     '';
 }

@@ -1,5 +1,7 @@
+backend:
 (import ./lib.nix) {
-  name = "test-nextcloud-docker";
+  inherit backend;
+  name = "test-nextcloud-${backend}";
   nodes = {
     machine1 =
       { self, pkgs, ... }:
@@ -8,7 +10,7 @@
         virtualisation.diskSize = 8192;
 
         # You can choose between 'docker' and 'podman' as backend.
-        khepri.ociBackend = "docker";
+        khepri.ociBackend = backend;
 
         # Define your compositions.
         # Each composition would be logically equivialent to a `docker-compose.yml`.
@@ -104,13 +106,13 @@
       machine1.succeed("systemctl is-active --quiet khepri-service-nextcloud_db.service")
       machine1.succeed("systemctl is-active --quiet khepri-service-nextcloud_redis.service")
       machine1.succeed("systemctl is-active --quiet khepri-service-nextcloud_app.service")
-      # The relevant docker resources where created.
-      machine1.succeed("docker network inspect nextcloud_nextcloud")
-      machine1.succeed("docker volume inspect nextcloud_nc_data")
-      machine1.succeed("docker volume inspect nextcloud_pg_data")
-      machine1.succeed("docker volume inspect nextcloud_redis_data")
-      machine1.succeed("docker inspect nextcloud_db")
-      machine1.succeed("docker inspect nextcloud_redis")
-      machine1.succeed("docker inspect nextcloud_app")
+      # The relevant ${backend} resources where created.
+      network_inspect(machine1, "nextcloud_nextcloud")
+      volume_inspect(machine1, "nextcloud_nc_data")
+      volume_inspect(machine1, "nextcloud_pg_data")
+      volume_inspect(machine1, "nextcloud_redis_data")
+      inspect(machine1, "nextcloud_db")
+      inspect(machine1, "nextcloud_redis")
+      inspect(machine1, "nextcloud_app")
     '';
 }

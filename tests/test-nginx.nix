@@ -1,11 +1,13 @@
+backend:
 (import ./lib.nix) {
-  name = "test-nginx-podman";
+  inherit backend;
+  name = "test-nginx-${backend}";
   nodes = {
     machine1 =
       { self, pkgs, ... }:
       {
         imports = [ self.nixosModules.khepri ];
-        khepri.ociBackend = "podman";
+        khepri.ociBackend = backend;
 
         khepri.compositions = {
           test = {
@@ -58,10 +60,10 @@
       machine1.succeed("systemctl is-active --quiet khepri-volume-test_nginx_content.service")
       machine1.succeed("systemctl is-active --quiet khepri-service-test_nginx0.service")
       machine1.succeed("systemctl is-active --quiet khepri-service-whoami0.service")
-      # The relevant podman resources where created.
-      machine1.succeed("podman network inspect test_proxy")
-      machine1.succeed("podman volume inspect test_nginx_content")
-      machine1.succeed("podman inspect test_nginx0")
-      machine1.succeed("podman inspect whoami0")
+      # The relevant ${backend} resources where created.
+      network_inspect(machine1, "test_proxy")
+      volume_inspect(machine1, "test_nginx_content")
+      inspect(machine1, "test_nginx0")
+      inspect(machine1, "whoami0")
     '';
 }

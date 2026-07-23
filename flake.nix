@@ -17,19 +17,30 @@
       checks = forAllSystems (
         system:
         let
-          checkArgs = {
-            pkgs = nixpkgs.legacyPackages.${system};
-            inherit self;
-          };
+          pkgs = nixpkgs.legacyPackages.${system};
+          inherit (pkgs) lib;
+          checkArgs = { inherit pkgs self; };
+          backends = [
+            "docker"
+            "podman"
+          ];
+          # Run a backend-parameterized test against every backend, producing
+          # `test-<name>-<backend>` checks.
+          matrix =
+            name: testFn:
+            lib.listToAttrs (
+              map (backend: {
+                name = "test-${name}-${backend}";
+                value = testFn backend checkArgs;
+              }) backends
+            );
         in
-        {
-          test-nginx-docker = import ./tests/test-nginx-docker.nix checkArgs;
-          test-nginx-podman = import ./tests/test-nginx-podman.nix checkArgs;
-          test-nextcloud-docker = import ./tests/test-nextcloud-docker.nix checkArgs;
+        (matrix "nginx" (import ./tests/test-nginx.nix))
+        // (matrix "healthchecks" (import ./tests/test-healthchecks.nix))
+        // (matrix "nextcloud" (import ./tests/test-nextcloud.nix))
+        // {
           test-ocipackage-docker = import ./tests/test-ocipackage-docker.nix checkArgs;
           test-ocipackage-podman = import ./tests/test-ocipackage-podman.nix checkArgs;
-          test-healthchecks-docker = import ./tests/test-healthchecks-docker.nix checkArgs;
-          test-healthchecks-podman = import ./tests/test-healthchecks-podman.nix checkArgs;
         }
       );
     };
