@@ -30,13 +30,7 @@ in
       ...
     }:
     let
-      nginxImage = pkgs.dockerTools.pullImage {
-        imageName = "nginx";
-        imageDigest = "sha256:0f04e4f646a3f14bf31d8bc8d885b6c951fdcf42589d06845f64d18aec6a3c4d";
-        sha256 = "159z86nw6riirs9ix4zix7qawhfngl5fkx7ypmi6ib0sfayc8pw2";
-        finalImageName = "nginx";
-        finalImageTag = "latest";
-      };
+      nginxImage = (import ./images.nix pkgs).nginx;
 
       mkNginxService =
         healthcheck:
@@ -97,13 +91,6 @@ in
       start_all()
       machine1.wait_for_unit("multi-user.target")
 
-      units = [
-          "khepri-service-test_nginx_full.service",
-          "khepri-service-test_nginx_timing.service",
-          "khepri-service-test_nginx_disabled.service",
-          "khepri-service-test_nginx_none.service",
-      ]
-
       cases = {
           "test_nginx_full": [
               ("{{json .Config.Healthcheck.Test}}", "CMD-SHELL"),
@@ -128,11 +115,11 @@ in
           ],
       }
 
-      for unit in units:
-          machine1.succeed(f"systemctl is-active --quiet {unit}")
-
-      for container in cases:
-          inspect(machine1, container)
+      assert_composition(
+          machine1,
+          "test",
+          services=["nginx_full", "nginx_timing", "nginx_disabled", "nginx_none"],
+      )
 
       for container, checks in cases.items():
           assert_healthcheck(machine1, container, checks)

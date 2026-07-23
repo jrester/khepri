@@ -5,6 +5,9 @@ backend:
   nodes = {
     machine1 =
       { self, pkgs, ... }:
+      let
+        images = import ./images.nix pkgs;
+      in
       {
         imports = [ self.nixosModules.khepri ];
         khepri.ociBackend = backend;
@@ -19,25 +22,13 @@ backend:
             };
             services = {
               nginx0 = {
-                image = pkgs.dockerTools.pullImage {
-                  imageName = "nginx";
-                  imageDigest = "sha256:0f04e4f646a3f14bf31d8bc8d885b6c951fdcf42589d06845f64d18aec6a3c4d";
-                  sha256 = "159z86nw6riirs9ix4zix7qawhfngl5fkx7ypmi6ib0sfayc8pw2";
-                  finalImageName = "nginx";
-                  finalImageTag = "latest";
-                };
+                image = images.nginx;
                 volumes = [ "nginx_content:/usr/share/nginx/html:ro" ];
                 networks = [ "proxy" ];
                 restart = "unless-stopped";
               };
               whoami0 = {
-                image = pkgs.dockerTools.pullImage {
-                  imageName = "traefik/whoami";
-                  imageDigest = "sha256:200689790a0a0ea48ca45992e0450bc26ccab5307375b41c84dfc4f2475937ab";
-                  hash = "sha256-Y6ZZJ9vgg8slPYe84kv46/VcbsrzD/UFVHcdmLMNrb4=";
-                  finalImageName = "traefik/whoami";
-                  finalImageTag = "v1.11";
-                };
+                image = images.whoami;
                 containerName = "whoami0";
                 networks = [ "proxy" ];
                 restart = "unless-stopped";
@@ -55,15 +46,13 @@ backend:
     ''
       start_all()
       machine1.wait_for_unit("multi-user.target")
-      # All relevant systemd units were successfully started.
-      machine1.succeed("systemctl is-active --quiet khepri-network-test_proxy.service")
-      machine1.succeed("systemctl is-active --quiet khepri-volume-test_nginx_content.service")
-      machine1.succeed("systemctl is-active --quiet khepri-service-test_nginx0.service")
-      machine1.succeed("systemctl is-active --quiet khepri-service-whoami0.service")
-      # The relevant ${backend} resources where created.
-      network_inspect(machine1, "test_proxy")
-      volume_inspect(machine1, "test_nginx_content")
-      inspect(machine1, "test_nginx0")
-      inspect(machine1, "whoami0")
+      # All khepri units are active and the ${backend} resources were created.
+      assert_composition(
+          machine1,
+          "test",
+          networks=["proxy"],
+          volumes=["nginx_content"],
+          services=["nginx0", ("whoami0", "whoami0")],
+      )
     '';
 }
