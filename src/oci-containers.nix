@@ -20,7 +20,7 @@ rec {
     option: values: map (value: _formatExtraOption option value) values;
 
   _mkExtraOptionsForHealthcheck =
-    healthcheckOptions:
+    backend: healthcheckOptions:
     [ ]
     ++ (
       # The healthcheck can be empty but other options might still be defined.
@@ -42,7 +42,11 @@ rec {
     ++ (_mkExtraOptionsForOptionalOption "health-timeout" healthcheckOptions.timeout)
     ++ (_mkExtraOptionsForOptionalOption "health-retries" healthcheckOptions.retries)
     ++ (_mkExtraOptionsForOptionalOption "health-start-period" healthcheckOptions.startPeriod)
-    ++ (_mkExtraOptionsForOptionalOption "health-start-interval" healthcheckOptions.startInterval);
+    # podman has no --health-start-interval; it uses --health-startup-interval instead.
+    # https://github.com/aksiksi/compose2nix/blob/901ac12a99c14c6f526487d58588f5c01109f5bb/compose.go#L309
+    ++ (_mkExtraOptionsForOptionalOption (
+      if backend == "podman" then "health-startup-interval" else "health-start-interval"
+    ) healthcheckOptions.startInterval);
 
   _mkCanonicalVolumeMapping =
     volumeMapping: volumeObjects:
@@ -63,7 +67,7 @@ rec {
       volumeMapping;
 
   mkContainerConfigurationForService =
-    serviceObject:
+    backend: serviceObject:
     let
       hostName =
         if serviceObject.containerName != null then serviceObject.containerName else serviceObject.name;
@@ -119,7 +123,7 @@ rec {
         )
         ++ (
           if serviceObject.healthcheck != null then
-            _mkExtraOptionsForHealthcheck serviceObject.healthcheck
+            _mkExtraOptionsForHealthcheck backend serviceObject.healthcheck
           else
             [ ]
         );

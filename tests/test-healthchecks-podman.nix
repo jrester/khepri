@@ -91,12 +91,18 @@
               ("{{.Config.Healthcheck.Timeout}}", "^10s$"),
               ("{{.Config.Healthcheck.Retries}}", "^3$"),
               ("{{.Config.Healthcheck.StartPeriod}}", "^5s$"),
-              ("{{.Config.Healthcheck.StartInterval}}", "^2s$"),
+              # podman maps startInterval to --health-startup-interval (docker's
+              # --health-start-interval does not exist on podman), so it is not
+              # reflected in Config.Healthcheck.StartInterval. The systemctl
+              # is-active check below asserts the flag does not break startup.
           ],
 
+          # Unlike docker, podman does not persist timing overrides when no
+          # health command is given and the image defines no probe, so
+          # Config.Healthcheck stays null here. The is-active check below still
+          # asserts the timing-only config does not break startup.
           "test_nginx_timing": [
-              ("{{.Config.Healthcheck.Interval}}", "^15s$"),
-              ("{{.Config.Healthcheck.Timeout}}", "^5s$"),
+              ("{{json .Config.Healthcheck}}", "^null$"),
           ],
 
           "test_nginx_disabled": [
@@ -119,7 +125,7 @@
           machine1.succeed(f"systemctl is-active --quiet {unit}")
 
       for container in cases:
-          machine1.succeed(f"docker inspect {container}")
+          machine1.succeed(f"podman inspect {container}")
 
       for container, checks in cases.items():
           assert_healthcheck(container, checks)

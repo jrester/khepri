@@ -155,7 +155,7 @@ let
       startInterval = mkOption {
         type = types.nullOr types.str;
         default = null;
-        description = "Time between running the check during the start period (ms|s|m|h)";
+        description = "Time between running the check during the start period (ms|s|m|h). On the podman backend this maps to --health-startup-interval and only takes effect together with a startup healthcheck command, so on a plain healthcheck it has no effect.";
       };
     };
   };
@@ -256,7 +256,7 @@ in
       virtualisation.podman.package = mkIf (cfg.ociBackend == "podman") (mkDefault cfg.ociPackage);
       virtualisation.oci-containers.containers = listToAttrs (
         map (
-          serviceObject: ociContainersHelpers.mkContainerConfigurationForService serviceObject
+          serviceObject: ociContainersHelpers.mkContainerConfigurationForService cfg.ociBackend serviceObject
         ) serviceObjects
       );
       systemd.services =
