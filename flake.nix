@@ -27,6 +27,8 @@
           test-nginx-docker = import ./tests/test-nginx-docker.nix checkArgs;
           test-nginx-podman = import ./tests/test-nginx-podman.nix checkArgs;
           test-nextcloud-docker = import ./tests/test-nextcloud-docker.nix checkArgs;
+          test-ocipackage-docker = import ./tests/test-ocipackage-docker.nix checkArgs;
+          test-ocipackage-podman = import ./tests/test-ocipackage-podman.nix checkArgs;
         }
       );
     };

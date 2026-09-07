@@ -5,7 +5,7 @@
       { self, pkgs, ... }:
       {
         imports = [ self.nixosModules.khepri ];
-        khepri.backend = "docker";
+        khepri.ociBackend = "docker";
 
         khepri.compositions = {
           test = {

@@ -36,7 +36,11 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
 { pkgs, ... }:
 {
   # You can choose between 'docker' and 'podman' as backend.
-  khepri.backend = "docker";
+  khepri.ociBackend = "docker";
+
+  # Optional: pin the package providing the backend. Defaults to `pkgs.docker`
+  # or `pkgs.podman`, matching `khepri.ociBackend`.
+  # khepri.ociPackage = pkgs.docker_25;
 
   # Define your compositions.
   # Each composition would be logically equivialent to a `docker-compose.yml`.

@@ -107,9 +107,10 @@ rec {
 
       after = dependencies;
       # `docker.service` is already part of `after`, however putting it also into `wants` adds a stricter dependency.
-      wants = (if khepriContext.backend == "docker" then [ "docker.service" ] else [ ]);
+      wants = (if khepriContext.ociBackend == "docker" then [ "docker.service" ] else [ ]);
       # Add `docker.socket` explicitly to ensure the docker daemon is available.
-      requires = dependencies ++ (if khepriContext.backend == "docker" then [ "docker.socket" ] else [ ]);
+      requires =
+        dependencies ++ (if khepriContext.ociBackend == "docker" then [ "docker.socket" ] else [ ]);
       partOf = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
       wantedBy = [ "${helpers.mkSystemdCompositionTargetName serviceObject.compositionName}.target" ];
     };

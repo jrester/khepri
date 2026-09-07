@@ -8,7 +8,7 @@
         virtualisation.diskSize = 8192;
 
         # You can choose between 'docker' and 'podman' as backend.
-        khepri.backend = "docker";
+        khepri.ociBackend = "docker";
 
         # Define your compositions.
         # Each composition would be logically equivialent to a `docker-compose.yml`.
