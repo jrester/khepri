@@ -14,6 +14,7 @@
     in
     {
       nixosModules.khepri = ./src/khepri.nix;
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
       checks = forAllSystems (
         system:
         let

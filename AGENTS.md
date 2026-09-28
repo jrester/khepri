@@ -63,8 +63,8 @@ its `testScript` — match the inspect command to the test's `ociBackend`.
 
 ## Conventions
 
-- Nix files are formatted with `nixfmt` (RFC style). Keep new code formatted the
-  same way.
+- Nix files are formatted with `nixfmt` (RFC style). Run `nix fmt` before
+  committing.
 - No new flake inputs / dependencies without a reason; the flake tracks only
   nixpkgs.
 - Verify runtime-affecting changes by building the relevant VM test, not just by
