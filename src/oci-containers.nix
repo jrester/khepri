@@ -118,6 +118,10 @@ rec {
         ++ (_mkExtraOptionsForRepeatableOptions "cap-add" serviceObject.capAdd)
         ++ (_mkExtraOptionsForRepeatableOptions "cap-drop" serviceObject.capDrop)
         ++ (_mkExtraOptionsForRepeatableOptions "add-host" serviceObject.extraHosts)
+        ++ (_mkExtraOptionsForOptionalOption "cpus" serviceObject.cpus)
+        ++ (_mkExtraOptionsForOptionalOption "memory" serviceObject.memory)
+        ++ (_mkExtraOptionsForOptionalOption "memory-reservation" serviceObject.memoryReservation)
+        ++ (_mkExtraOptionsForOptionalOption "pids-limit" serviceObject.pidsLimit)
         ++ (
           # Hostname might only be set if at least one user-defined network is specified for the container.
           if builtins.length serviceObject.networks > 0 then

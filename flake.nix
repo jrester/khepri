@@ -39,6 +39,7 @@
         // (matrix "healthchecks" (import ./tests/test-healthchecks.nix))
         // (matrix "nextcloud" (import ./tests/test-nextcloud.nix))
         // (matrix "ocipackage" (import ./tests/test-ocipackage.nix))
+        // (matrix "resources" (import ./tests/test-resources.nix))
       );
     };
 }

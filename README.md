@@ -161,7 +161,11 @@ Each service is translated to a `systemd` service unit `khepri-service-<canonica
 | [`depends_on`](https://docs.docker.com/compose/compose-file/05-services/#depends_on) | ⚠️ | Short and long syntax supported with all three conditions. Long-syntax `restart` and `required` are not supported. |
 | [`restart`](https://docs.docker.com/compose/compose-file/05-services/#restart) | ⚠️ | No 'on-failure:<x>' |
 | [`deploy.restart_policy`](https://docs.docker.com/compose/compose-file/deploy/#restart_policy) | ❌ | |
-| [`deploy.resources`](https://docs.docker.com/compose/compose-file/deploy/#resources) | ❌ | |
+| [`deploy.resources`](https://docs.docker.com/compose/compose-file/deploy/#resources) | ❌ | Use the top-level limits below. |
+| [`cpus`](https://docs.docker.com/compose/compose-file/05-services/#cpus) | ✅ | As `cpus` |
+| [`mem_limit`](https://docs.docker.com/compose/compose-file/05-services/#mem_limit) | ✅ | As `memory` |
+| [`mem_reservation`](https://docs.docker.com/compose/compose-file/05-services/#mem_reservation) | ✅ | As `memoryReservation` |
+| [`pids_limit`](https://docs.docker.com/compose/compose-file/05-services/#pids_limit) | ✅ | As `pidsLimit` |
 | [`devices`](https://docs.docker.com/compose/compose-file/05-services/#devices) | ✅ | |
 | [`networks`](https://docs.docker.com/compose/compose-file/05-services/#networks) | ✅ | |
 | [`networks.aliases`](https://docs.docker.com/compose/compose-file/05-services/#aliases) | ❌ | |

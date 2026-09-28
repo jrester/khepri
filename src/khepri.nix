@@ -128,6 +128,26 @@ let
           type = types.nullOr (types.submodule serviceHealthcheckOptions);
           default = null;
         };
+        cpus = mkOption {
+          type = types.nullOr (types.either types.str types.number);
+          default = null;
+          description = "CPU limit, e.g. `\"0.5\"` (compose's `cpus`).";
+        };
+        memory = mkOption {
+          type = types.nullOr (types.either types.str types.ints.positive);
+          default = null;
+          description = "Hard memory limit, e.g. `\"512m\"` or bytes (compose's `mem_limit`).";
+        };
+        memoryReservation = mkOption {
+          type = types.nullOr (types.either types.str types.ints.positive);
+          default = null;
+          description = "Soft memory limit, e.g. `\"256m\"` or bytes (compose's `mem_reservation`).";
+        };
+        pidsLimit = mkOption {
+          type = types.nullOr types.int;
+          default = null;
+          description = "Maximum number of processes, `-1` for unlimited (compose's `pids_limit`).";
+        };
       };
     };
   dependsOnOptions = { ... }: {
