@@ -15,6 +15,8 @@ let
   # Backend-aware helpers, available to every testScript. `machine` is the test
   # driver node object; `name` a container/network/volume name.
   prelude = lib.optionalString (backend != null) ''
+    import re
+
     CLI = "${backend}"
 
     def assert_container_exists(machine, name):
@@ -26,9 +28,11 @@ let
     def assert_volume_exists(machine, name):
         return machine.succeed(f"{CLI} volume inspect {name}")
 
-    def assert_healthcheck(machine, name, checks):
-        for fmt, expected in checks:
-            machine.succeed(f"{CLI} inspect --format '{fmt}' {name} | grep -q '{expected}'")
+    def assert_inspect(machine, name, checks):
+        # Each check is a (format, regex) pair; anchor the regex for an exact match.
+        for fmt, pattern in checks:
+            actual = machine.succeed(f"{CLI} inspect --format '{fmt}' {name}").strip()
+            assert re.search(pattern, actual), f"{name} {fmt}: expected /{pattern}/, got {actual}"
 
     def assert_active(machine, unit):
         machine.succeed(f"systemctl is-active --quiet {unit}")

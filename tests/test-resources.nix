@@ -48,17 +48,17 @@ backend:
 
     assert_composition(machine1, "test", services=["strings", "numbers", "unlimited"])
 
-    def assert_host_config(name, field, expected):
-        actual = machine1.succeed(f"{CLI} inspect --format '{{{{.HostConfig.{field}}}}}' {name}").strip()
-        assert actual == expected, f"{name} {field}: expected {expected}, got {actual}"
-
     for name, cpus in [("test_strings", "500000000"), ("test_numbers", "1500000000")]:
-        assert_host_config(name, "NanoCpus", cpus)
-        assert_host_config(name, "Memory", "268435456")
-        assert_host_config(name, "MemoryReservation", "134217728")
+        assert_inspect(machine1, name, [
+            ("{{.HostConfig.NanoCpus}}", f"^{cpus}$"),
+            ("{{.HostConfig.Memory}}", "^268435456$"),
+            ("{{.HostConfig.MemoryReservation}}", "^134217728$"),
+        ])
 
-    assert_host_config("test_strings", "PidsLimit", "100")
-    assert_host_config("test_unlimited", "NanoCpus", "0")
-    assert_host_config("test_unlimited", "Memory", "0")
+    assert_inspect(machine1, "test_strings", [("{{.HostConfig.PidsLimit}}", "^100$")])
+    assert_inspect(machine1, "test_unlimited", [
+        ("{{.HostConfig.NanoCpus}}", "^0$"),
+        ("{{.HostConfig.Memory}}", "^0$"),
+    ])
   '';
 }

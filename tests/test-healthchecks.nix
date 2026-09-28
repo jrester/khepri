@@ -272,6 +272,6 @@ in
       )
 
       for container, checks in cases.items():
-          assert_healthcheck(machine1, container, checks)
+          assert_inspect(machine1, container, checks)
     '';
 }
