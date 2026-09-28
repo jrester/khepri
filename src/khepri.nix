@@ -92,8 +92,13 @@ let
           default = [ ];
         };
         dependsOn = mkOption {
-          type = types.listOf types.str;
+          type = types.either (types.listOf types.str) (types.attrsOf (types.submodule dependsOnOptions));
           default = [ ];
+          description = ''
+            Services of the same composition this service depends on. Either a list of
+            service names (compose's short syntax, waits for `service_started`) or an
+            attrset of service name to `{ condition; }` (compose's long syntax).
+          '';
         };
         devices = mkOption {
           type = types.listOf types.str;
@@ -125,6 +130,24 @@ let
         };
       };
     };
+  dependsOnOptions = { ... }: {
+    options = {
+      condition = mkOption {
+        type = types.enum [
+          "service_started"
+          "service_healthy"
+          "service_completed_successfully"
+        ];
+        default = "service_started";
+        description = ''
+          `service_started` waits until the dependency's unit is active.
+          `service_healthy` additionally waits until the dependency's container
+          reports `healthy`, and fails if it reports `unhealthy` or has no healthcheck.
+          `service_completed_successfully` waits until the dependency's container
+          exited with 0, and fails if it exited otherwise.'';
+      };
+    };
+  };
   serviceHealthcheckOptions = { ... }: {
     options = {
       test = mkOption {

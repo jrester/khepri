@@ -40,6 +40,18 @@ backend:
                   POSTGRES_USER = "nextcloud";
                   POSTGRES_PASSWORD = "changeme";
                 };
+                healthcheck = {
+                  test = [
+                    "CMD"
+                    "pg_isready"
+                    "-U"
+                    "nextcloud"
+                    "-d"
+                    "nextcloud"
+                  ];
+                  interval = "5s";
+                  retries = 5;
+                };
                 restart = "unless-stopped";
               };
 
@@ -65,10 +77,11 @@ backend:
                   REDIS_HOST = "redis";
                   NEXTCLOUD_TRUSTED_DOMAINS = "nextcloud.example.com";
                 };
-                dependsOn = [
-                  "db"
-                  "redis"
-                ];
+                # Like compose's long syntax: wait for db to report healthy, redis only to start.
+                dependsOn = {
+                  db.condition = "service_healthy";
+                  redis = { };
+                };
                 restart = "unless-stopped";
               };
             };

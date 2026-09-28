@@ -29,9 +29,15 @@ rec {
         # Healthchecks 'test' may start with different identifiers 'CMD', 'CMD-SHELL' or 'NONE'.
         # When 'NONE' is configured, this means that an existing healthcheck of the container should be disabled.
         # The other two options should be handled directly by the underlying container options.
+        # --health-cmd takes a shell string, so the marker is dropped and CMD arguments are quoted.
         if (head healthcheckOptions.test) != "NONE" then
           [
-            (_formatExtraOption "health-cmd" (lib.concatStringsSep " " healthcheckOptions.test))
+            (_formatExtraOption "health-cmd" (
+              if (head healthcheckOptions.test) == "CMD" then
+                lib.escapeShellArgs (tail healthcheckOptions.test)
+              else
+                lib.concatStringsSep " " (tail healthcheckOptions.test)
+            ))
           ]
         else
           [ "--no-healthcheck" ]
