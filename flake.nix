@@ -38,10 +38,7 @@
         (matrix "nginx" (import ./tests/test-nginx.nix))
         // (matrix "healthchecks" (import ./tests/test-healthchecks.nix))
         // (matrix "nextcloud" (import ./tests/test-nextcloud.nix))
-        // {
-          test-ocipackage-docker = import ./tests/test-ocipackage-docker.nix checkArgs;
-          test-ocipackage-podman = import ./tests/test-ocipackage-podman.nix checkArgs;
-        }
+        // (matrix "ocipackage" (import ./tests/test-ocipackage.nix))
       );
     };
 }

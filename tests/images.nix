@@ -1,8 +1,7 @@
 # Shared container image pins for the tests, keyed by name. A test references
 # `(import ./images.nix pkgs).nginx` instead of copy-pasting the digest/sha256,
 # so a pin lives in one place and can't drift between tests.
-pkgs:
-{
+pkgs: {
   nginx = pkgs.dockerTools.pullImage {
     imageName = "nginx";
     imageDigest = "sha256:0f04e4f646a3f14bf31d8bc8d885b6c951fdcf42589d06845f64d18aec6a3c4d";
