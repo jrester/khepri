@@ -92,8 +92,13 @@ let
           default = [ ];
         };
         dependsOn = mkOption {
-          type = types.listOf types.str;
+          type = types.either (types.listOf types.str) (types.attrsOf (types.submodule dependsOnOptions));
           default = [ ];
+          description = ''
+            Services of the same composition this service depends on. Either a list of
+            service names (compose's short syntax, waits for `service_started`) or an
+            attrset of service name to `{ condition; }` (compose's long syntax).
+          '';
         };
         devices = mkOption {
           type = types.listOf types.str;
@@ -119,8 +124,64 @@ let
           type = types.nullOr types.str;
           default = null;
         };
+        healthcheck = mkOption {
+          type = types.nullOr (types.submodule serviceHealthcheckOptions);
+          default = null;
+        };
       };
     };
+  dependsOnOptions = { ... }: {
+    options = {
+      condition = mkOption {
+        type = types.enum [
+          "service_started"
+          "service_healthy"
+          "service_completed_successfully"
+        ];
+        default = "service_started";
+        description = ''
+          `service_started` waits until the dependency's unit is active.
+          `service_healthy` additionally waits until the dependency's container
+          reports `healthy`, and fails if it reports `unhealthy` or has no healthcheck.
+          `service_completed_successfully` waits until the dependency's container
+          exited with 0, and fails if it exited otherwise.'';
+      };
+    };
+  };
+  serviceHealthcheckOptions = { ... }: {
+    options = {
+      test = mkOption {
+        type = types.nullOr (types.listOf types.str);
+        default = null;
+        description = "Command to run to check health";
+      };
+      interval = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Time between running the check (ms|s|m|h)";
+      };
+      timeout = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Maximum time to allow one check to run (ms|s|m|h)";
+      };
+      retries = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = "Consecutive failures needed to report unhealthy";
+      };
+      startPeriod = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Start period for the container to initialize before starting health-retries countdown (ms|s|m|h)";
+      };
+      startInterval = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Time between running the check during the start period (ms|s|m|h). On the podman backend this maps to --health-startup-interval and only takes effect together with a startup healthcheck command, so on a plain healthcheck it has no effect.";
+      };
+    };
+  };
   helpers = import ./helpers.nix { inherit lib; };
   systemdHelpers = import ./systemd.nix { inherit helpers pkgs lib; };
   ociContainersHelpers = import ./oci-containers.nix { inherit helpers pkgs lib; };
@@ -218,7 +279,7 @@ in
       virtualisation.podman.package = mkIf (cfg.ociBackend == "podman") (mkDefault cfg.ociPackage);
       virtualisation.oci-containers.containers = listToAttrs (
         map (
-          serviceObject: ociContainersHelpers.mkContainerConfigurationForService serviceObject
+          serviceObject: ociContainersHelpers.mkContainerConfigurationForService cfg.ociBackend serviceObject
         ) serviceObjects
       );
       systemd.services =

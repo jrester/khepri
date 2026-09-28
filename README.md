@@ -67,6 +67,11 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
             POSTGRES_USER     = "nextcloud";
             POSTGRES_PASSWORD = "changeme";
           };
+          healthcheck = {
+            test = [ "CMD" "pg_isready" "-U" "nextcloud" "-d" "nextcloud" ];
+            interval = "5s";
+            retries = 5;
+          };
           restart = "unless-stopped";
         };
 
@@ -98,7 +103,11 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
             REDIS_HOST        = "redis";
             NEXTCLOUD_TRUSTED_DOMAINS = "nextcloud.example.com";
           };
-          dependsOn = [ "db" "redis" ];
+          # Like compose's long syntax: wait for db to report healthy, redis only to start.
+          dependsOn = {
+            db.condition = "service_healthy";
+            redis = { };
+          };
           restart   = "unless-stopped";
         };       
       };
@@ -149,7 +158,7 @@ Each service is translated to a `systemd` service unit `khepri-service-<canonica
 | [`dns`](https://docs.docker.com/compose/compose-file/05-services/#dns) | ❌ | |
 | [`cap_add/cap_drop`](https://docs.docker.com/compose/compose-file/05-services/#cap_add) | ✅ | |
 | [`logging`](https://docs.docker.com/compose/compose-file/05-services/#logging) | ❌ | |
-| [`depends_on`](https://docs.docker.com/compose/compose-file/05-services/#depends_on) | ⚠️ | Only short syntax is supported. |
+| [`depends_on`](https://docs.docker.com/compose/compose-file/05-services/#depends_on) | ⚠️ | Short and long syntax. Long syntax supports the conditions `service_started`, `service_healthy` and `service_completed_successfully`. |
 | [`restart`](https://docs.docker.com/compose/compose-file/05-services/#restart) | ⚠️ | No 'on-failure:<x>' |
 | [`deploy.restart_policy`](https://docs.docker.com/compose/compose-file/deploy/#restart_policy) | ❌ | |
 | [`deploy.resources`](https://docs.docker.com/compose/compose-file/deploy/#resources) | ❌ | |
@@ -165,7 +174,7 @@ Each service is translated to a `systemd` service unit `khepri-service-<canonica
 | [`runtime`](https://docs.docker.com/compose/compose-file/05-services/#runtime) | ❌ | |
 | [`security_opt`](https://docs.docker.com/compose/compose-file/05-services/#security_opt) | ❌ | |
 | [`command`](https://docs.docker.com/compose/compose-file/05-services/#command) | ✅ | |
-| [`healthcheck`](https://docs.docker.com/compose/compose-file/05-services/#healthcheck) | ❌ | |
+| [`healthcheck`](https://docs.docker.com/compose/compose-file/05-services/#healthcheck) | ✅ |  |
 | [`hostname`](https://docs.docker.com/compose/compose-file/05-services/#hostname) | ❌ | |
 | [`mac_address`](https://docs.docker.com/compose/compose-file/05-services/#mac_address) | ❌ | |
 
