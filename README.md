@@ -17,7 +17,7 @@ Assuming you are using flakes to configure your NixOS system, you can add the `k
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     khepri = {
-      url = "github:jrester/khepri/v0.2.0";
+      url = "github:jrester/khepri/v0.3.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
